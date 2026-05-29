@@ -9,8 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SolicitarRouteImport } from './routes/solicitar'
+import { Route as MinhasReservasRouteImport } from './routes/minhas-reservas'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SolicitarRoute = SolicitarRouteImport.update({
+  id: '/solicitar',
+  path: '/solicitar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MinhasReservasRoute = MinhasReservasRouteImport.update({
+  id: '/minhas-reservas',
+  path: '/minhas-reservas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +37,61 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/minhas-reservas': typeof MinhasReservasRoute
+  '/solicitar': typeof SolicitarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/minhas-reservas': typeof MinhasReservasRoute
+  '/solicitar': typeof SolicitarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/minhas-reservas': typeof MinhasReservasRoute
+  '/solicitar': typeof SolicitarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/login' | '/minhas-reservas' | '/solicitar'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/login' | '/minhas-reservas' | '/solicitar'
+  id: '__root__' | '/' | '/login' | '/minhas-reservas' | '/solicitar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  MinhasReservasRoute: typeof MinhasReservasRoute
+  SolicitarRoute: typeof SolicitarRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/solicitar': {
+      id: '/solicitar'
+      path: '/solicitar'
+      fullPath: '/solicitar'
+      preLoaderRoute: typeof SolicitarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/minhas-reservas': {
+      id: '/minhas-reservas'
+      path: '/minhas-reservas'
+      fullPath: '/minhas-reservas'
+      preLoaderRoute: typeof MinhasReservasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,7 +104,20 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  MinhasReservasRoute: MinhasReservasRoute,
+  SolicitarRoute: SolicitarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
