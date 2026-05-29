@@ -14,16 +14,211 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      driver_status: {
+        Row: {
+          id: number
+          status: Database["public"]["Enums"]["driver_state"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: number
+          status?: Database["public"]["Enums"]["driver_state"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: number
+          status?: Database["public"]["Enums"]["driver_state"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      ride_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          ride_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          ride_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          ride_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ride_messages_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "ride_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ride_requests: {
+        Row: {
+          created_at: string
+          destination: string
+          distance_km: number
+          estimated_price: number
+          final_price: number | null
+          id: string
+          notes: string | null
+          origin: string
+          passenger_count: number
+          passenger_id: string
+          rejection_reason: string | null
+          ride_date: string
+          ride_time: string
+          status: Database["public"]["Enums"]["ride_status"]
+          trip_type: Database["public"]["Enums"]["trip_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          destination: string
+          distance_km: number
+          estimated_price: number
+          final_price?: number | null
+          id?: string
+          notes?: string | null
+          origin: string
+          passenger_count?: number
+          passenger_id: string
+          rejection_reason?: string | null
+          ride_date: string
+          ride_time: string
+          status?: Database["public"]["Enums"]["ride_status"]
+          trip_type?: Database["public"]["Enums"]["trip_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          destination?: string
+          distance_km?: number
+          estimated_price?: number
+          final_price?: number | null
+          id?: string
+          notes?: string | null
+          origin?: string
+          passenger_count?: number
+          passenger_id?: string
+          rejection_reason?: string | null
+          ride_date?: string
+          ride_time?: string
+          status?: Database["public"]["Enums"]["ride_status"]
+          trip_type?: Database["public"]["Enums"]["trip_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ride_settings: {
+        Row: {
+          id: number
+          max_passengers: number
+          min_price: number
+          price_per_km: number
+          reservation_fee: number
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          max_passengers?: number
+          min_price?: number
+          price_per_km?: number
+          reservation_fee?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          max_passengers?: number
+          min_price?: number
+          price_per_km?: number
+          reservation_fee?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "passenger"
+      driver_state: "online" | "busy" | "offline"
+      ride_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "paid"
+        | "confirmed"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+      trip_type: "one_way" | "round_trip"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +345,20 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "passenger"],
+      driver_state: ["online", "busy", "offline"],
+      ride_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "paid",
+        "confirmed",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
+      trip_type: ["one_way", "round_trip"],
+    },
   },
 } as const
