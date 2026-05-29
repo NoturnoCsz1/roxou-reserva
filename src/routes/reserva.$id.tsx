@@ -72,8 +72,8 @@ function ReservaDetalhe() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, id]);
 
-  const update = async (patch: Partial<Ride>) => {
-    const { error } = await supabase.from("ride_requests").update(patch).eq("id", id);
+  const update = async (patch: Record<string, unknown>) => {
+    const { error } = await supabase.from("ride_requests").update(patch as never).eq("id", id);
     if (error) toast.error(error.message);
     else toast.success("Atualizado");
   };
