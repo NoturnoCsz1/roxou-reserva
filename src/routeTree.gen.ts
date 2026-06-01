@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SolicitarRouteImport } from './routes/solicitar'
 import { Route as MinhasReservasRouteImport } from './routes/minhas-reservas'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -18,6 +19,11 @@ import { Route as ReservaIdRouteImport } from './routes/reserva.$id'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configuracoes'
 import { Route as AdminAgendaRouteImport } from './routes/admin.agenda'
 
+const SolicitarRoute = SolicitarRouteImport.update({
+  id: '/solicitar',
+  path: '/solicitar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MinhasReservasRoute = MinhasReservasRouteImport.update({
   id: '/minhas-reservas',
   path: '/minhas-reservas',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/minhas-reservas': typeof MinhasReservasRoute
+  '/solicitar': typeof SolicitarRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/reserva/$id': typeof ReservaIdRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/minhas-reservas': typeof MinhasReservasRoute
+  '/solicitar': typeof SolicitarRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/reserva/$id': typeof ReservaIdRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/minhas-reservas': typeof MinhasReservasRoute
+  '/solicitar': typeof SolicitarRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/reserva/$id': typeof ReservaIdRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/minhas-reservas'
+    | '/solicitar'
     | '/admin/agenda'
     | '/admin/configuracoes'
     | '/reserva/$id'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/minhas-reservas'
+    | '/solicitar'
     | '/admin/agenda'
     | '/admin/configuracoes'
     | '/reserva/$id'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/minhas-reservas'
+    | '/solicitar'
     | '/admin/agenda'
     | '/admin/configuracoes'
     | '/reserva/$id'
@@ -126,11 +138,19 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
   MinhasReservasRoute: typeof MinhasReservasRoute
+  SolicitarRoute: typeof SolicitarRoute
   ReservaIdRoute: typeof ReservaIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/solicitar': {
+      id: '/solicitar'
+      path: '/solicitar'
+      fullPath: '/solicitar'
+      preLoaderRoute: typeof SolicitarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/minhas-reservas': {
       id: '/minhas-reservas'
       path: '/minhas-reservas'
@@ -209,6 +229,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
   MinhasReservasRoute: MinhasReservasRoute,
+  SolicitarRoute: SolicitarRoute,
   ReservaIdRoute: ReservaIdRoute,
 }
 export const routeTree = rootRouteImport
