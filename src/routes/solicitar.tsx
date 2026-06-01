@@ -103,7 +103,7 @@ function Solicitar() {
     e.preventDefault();
     if (!user) return;
 
-    const finalDistance = routeData?.distanceKm ?? parseFloat(manualKm.replace(",", ".")) || 0;
+    const finalDistance = routeData?.distanceKm ?? (parseFloat(manualKm.replace(",", ".")) || 0);
     const source: "google_maps" | "manual_fallback" = routeData ? "google_maps" : "manual_fallback";
 
     const parsed = schema.safeParse({
