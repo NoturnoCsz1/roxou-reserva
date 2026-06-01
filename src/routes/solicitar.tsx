@@ -211,8 +211,8 @@ function Solicitar() {
           <div className="space-y-2 rounded-2xl border border-dashed border-border p-3">
             <Label htmlFor="manualKm" className="text-sm font-medium">Distância aproximada (km)</Label>
             {routeError && (
-              <p className="text-xs text-muted-foreground">
-                Não conseguimos calcular automaticamente. Informe a distância aproximada para continuar.
+              <p className="text-xs text-destructive break-words">
+                Erro do Google Maps: {routeError}
               </p>
             )}
             <Input id="manualKm" inputMode="decimal" className="h-12" value={manualKm} onChange={(e) => setManualKm(e.target.value)} placeholder="0" />

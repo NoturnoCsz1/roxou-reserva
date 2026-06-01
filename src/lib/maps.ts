@@ -48,11 +48,9 @@ export async function calculateRoute(input: RouteInput): Promise<RouteResult> {
     regionCode: "BR",
   };
 
-  console.log("[MAPS] ROUTE REQUEST", {
-    origin,
-    destination,
-    stops: intermediates.length,
-  });
+  console.log("[MAPS] ORIGIN:", origin);
+  console.log("[MAPS] DESTINATION:", destination);
+  console.log("[MAPS] REQUEST BODY:", JSON.stringify(body, null, 2));
 
   const res = await fetch(
     "https://routes.googleapis.com/directions/v2:computeRoutes",
@@ -68,24 +66,37 @@ export async function calculateRoute(input: RouteInput): Promise<RouteResult> {
     },
   );
 
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    console.error("[MAPS] ERROR", res.status, txt.slice(0, 300));
-    throw new Error(`Routes API ${res.status}: ${txt.slice(0, 200)}`);
-  }
+  console.log("[MAPS] RESPONSE STATUS:", res.status);
 
-  const data = (await res.json()) as {
+  const rawText = await res.text();
+  let data: {
     routes?: Array<{
       distanceMeters?: number;
       duration?: string;
       polyline?: { encodedPolyline?: string };
     }>;
-  };
+    error?: { code?: number; message?: string; status?: string };
+  } = {};
+  try {
+    data = rawText ? JSON.parse(rawText) : {};
+  } catch {
+    data = {};
+  }
+  console.log("[MAPS] RESPONSE DATA:", data);
+
+  if (!res.ok || data.error) {
+    const status = data.error?.status || `HTTP_${res.status}`;
+    const message = data.error?.message || rawText.slice(0, 200) || "Erro desconhecido";
+    console.error("[MAPS] ERROR:", status, message);
+    throw new Error(`${status}: ${message}`);
+  }
 
   const route = data.routes?.[0];
   if (!route || typeof route.distanceMeters !== "number") {
-    console.error("[MAPS] ERROR", "Rota não encontrada", data);
-    throw new Error("Rota não encontrada");
+    console.error("[MAPS] ERROR: ZERO_RESULTS", data);
+    throw new Error(
+      "ZERO_RESULTS: Google não encontrou rota para esses endereços. Use endereços mais específicos (rua, número, cidade).",
+    );
   }
 
   const distanceKm = Math.round((route.distanceMeters / 1000) * 10) / 10;
