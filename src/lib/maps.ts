@@ -16,12 +16,16 @@ export const GOOGLE_MAPS_KEY: string | undefined =
 
 export const mapsConfigured = (): boolean => Boolean(GOOGLE_MAPS_KEY);
 
+// Log único na carga do módulo para diagnóstico
+console.log("[MAPS] API KEY EXISTS:", !!GOOGLE_MAPS_KEY);
+
 /**
  * Calcula a distância e duração de uma rota usando a Google Routes API (v2).
  * Lança erro se a chamada falhar ou se a chave não estiver configurada.
  */
 export async function calculateRoute(input: RouteInput): Promise<RouteResult> {
   const key = GOOGLE_MAPS_KEY;
+  console.log("[MAPS] API KEY EXISTS:", !!key);
   if (!key) throw new Error("GOOGLE_MAPS_NOT_CONFIGURED");
 
   const origin = input.origin.trim();
@@ -44,6 +48,12 @@ export async function calculateRoute(input: RouteInput): Promise<RouteResult> {
     regionCode: "BR",
   };
 
+  console.log("[MAPS] ROUTE REQUEST", {
+    origin,
+    destination,
+    stops: intermediates.length,
+  });
+
   const res = await fetch(
     "https://routes.googleapis.com/directions/v2:computeRoutes",
     {
@@ -60,6 +70,7 @@ export async function calculateRoute(input: RouteInput): Promise<RouteResult> {
 
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
+    console.error("[MAPS] ERROR", res.status, txt.slice(0, 300));
     throw new Error(`Routes API ${res.status}: ${txt.slice(0, 200)}`);
   }
 
@@ -73,6 +84,7 @@ export async function calculateRoute(input: RouteInput): Promise<RouteResult> {
 
   const route = data.routes?.[0];
   if (!route || typeof route.distanceMeters !== "number") {
+    console.error("[MAPS] ERROR", "Rota não encontrada", data);
     throw new Error("Rota não encontrada");
   }
 
@@ -80,10 +92,15 @@ export async function calculateRoute(input: RouteInput): Promise<RouteResult> {
   const durationSec = route.duration ? parseInt(route.duration.replace("s", ""), 10) : 0;
   const durationMinutes = Math.max(1, Math.round(durationSec / 60));
 
-  return {
+  const result: RouteResult = {
     distanceKm,
     durationMinutes,
     polyline: route.polyline?.encodedPolyline,
     source: "google_maps",
   };
+  console.log("[MAPS] ROUTE RESPONSE", {
+    distanceKm: result.distanceKm,
+    durationMinutes: result.durationMinutes,
+  });
+  return result;
 }
