@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { MapPin, Calendar, Users, Route as RouteIcon } from "lucide-react";
+import { MapPin, Calendar, Users, Route as RouteIcon, Clock, Navigation } from "lucide-react";
 
 export const Route = createFileRoute("/reserva/$id")({
   head: () => ({ meta: [{ title: "Reserva — Reserva Roxou" }] }),
@@ -23,9 +23,12 @@ type Ride = {
   passenger_id: string;
   origin: string;
   destination: string;
+  stops: string[] | null;
   ride_date: string;
   ride_time: string;
   distance_km: number;
+  duration_minutes: number | null;
+  route_source: string | null;
   trip_type: string;
   passenger_count: number;
   notes: string | null;
@@ -112,7 +115,25 @@ function ReservaDetalhe() {
               <RouteIcon className="h-4 w-4 text-muted-foreground" />
               {ride.distance_km} km · {ride.trip_type === "round_trip" ? "Ida e volta" : "Ida"}
             </div>
+            {ride.duration_minutes != null && (
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                {ride.duration_minutes} min
+              </div>
+            )}
           </div>
+          {Array.isArray(ride.stops) && ride.stops.length > 0 && (
+            <div className="pt-2 border-t border-border">
+              <p className="text-xs text-muted-foreground">Paradas</p>
+              <p className="text-sm">{ride.stops.join(" → ")}</p>
+            </div>
+          )}
+          {isAdmin && ride.route_source && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+              <Navigation className="h-3.5 w-3.5" />
+              Rota: {ride.route_source === "google_maps" ? "Google Maps" : "Manual (fallback)"}
+            </div>
+          )}
           {ride.notes && (
             <div className="pt-2 border-t border-border">
               <p className="text-xs text-muted-foreground">Observação</p>

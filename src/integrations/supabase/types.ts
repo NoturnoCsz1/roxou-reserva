@@ -96,6 +96,7 @@ export type Database = {
           created_at: string
           destination: string
           distance_km: number
+          duration_minutes: number | null
           estimated_price: number
           final_price: number | null
           id: string
@@ -106,7 +107,9 @@ export type Database = {
           rejection_reason: string | null
           ride_date: string
           ride_time: string
+          route_source: string
           status: Database["public"]["Enums"]["ride_status"]
+          stops: Json
           trip_type: Database["public"]["Enums"]["trip_type"]
           updated_at: string
         }
@@ -114,6 +117,7 @@ export type Database = {
           created_at?: string
           destination: string
           distance_km: number
+          duration_minutes?: number | null
           estimated_price: number
           final_price?: number | null
           id?: string
@@ -124,7 +128,9 @@ export type Database = {
           rejection_reason?: string | null
           ride_date: string
           ride_time: string
+          route_source?: string
           status?: Database["public"]["Enums"]["ride_status"]
+          stops?: Json
           trip_type?: Database["public"]["Enums"]["trip_type"]
           updated_at?: string
         }
@@ -132,6 +138,7 @@ export type Database = {
           created_at?: string
           destination?: string
           distance_km?: number
+          duration_minutes?: number | null
           estimated_price?: number
           final_price?: number | null
           id?: string
@@ -142,7 +149,9 @@ export type Database = {
           rejection_reason?: string | null
           ride_date?: string
           ride_time?: string
+          route_source?: string
           status?: Database["public"]["Enums"]["ride_status"]
+          stops?: Json
           trip_type?: Database["public"]["Enums"]["trip_type"]
           updated_at?: string
         }
