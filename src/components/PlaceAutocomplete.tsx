@@ -28,6 +28,7 @@ export function PlaceAutocomplete({ value, onChange, placeholder, id }: Props) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   const debounceRef = useRef<number | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -56,13 +57,18 @@ export function PlaceAutocomplete({ value, onChange, placeholder, id }: Props) {
       return;
     }
     setLoading(true);
+    setErrorMsg(null);
     try {
       const g = await loadGoogleMaps();
       const placesLib = (await g.maps.importLibrary("places")) as google.maps.PlacesLibrary;
       const { AutocompleteSuggestion, AutocompleteSessionToken } = placesLib;
+      console.log("[GOOGLE] PLACES LOADED", {
+        hasAutocompleteSuggestion: !!AutocompleteSuggestion,
+      });
 
       if (!sessionTokenRef.current) {
         sessionTokenRef.current = new AutocompleteSessionToken();
+        console.log("[GOOGLE] AUTOCOMPLETE INITIALIZED");
       }
       console.log("[PLACES] QUERY", input);
       const { suggestions: results } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
@@ -87,10 +93,25 @@ export function PlaceAutocomplete({ value, onChange, placeholder, id }: Props) {
           secondary: p.secondaryText?.toString() ?? "",
         });
       }
+      console.log("[GOOGLE] SUGGESTIONS COUNT", mapped.length);
       setSuggestions(mapped);
       setOpen(true);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("[PLACES] ERROR", err);
+      const raw =
+        err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err);
+      let friendly = raw;
+      if (/referer.*blocked|API_KEY_HTTP_REFERRER_BLOCKED/i.test(raw)) {
+        friendly =
+          "Chave do Google bloqueada para este domínio. No Google Cloud Console, em Credenciais → sua API key → Restrições de aplicativo (HTTP referrers), adicione: https://*.lovableproject.com/*, https://*.lovable.app/* e seu domínio final (ex.: https://reserva.roxou.com.br/*). Aguarde ~1 min e recarregue.";
+      } else if (/API_KEY_INVALID|InvalidKey/i.test(raw)) {
+        friendly = "Chave do Google inválida. Verifique VITE_GOOGLE_MAPS_API_KEY.";
+      } else if (/PERMISSION_DENIED|API.*not enabled/i.test(raw)) {
+        friendly = "Places API (New) não habilitada no projeto do Google Cloud.";
+      } else if (/BILLING/i.test(raw)) {
+        friendly = "Faturamento (billing) não habilitado no projeto do Google Cloud.";
+      }
+      setErrorMsg(friendly);
       setSuggestions([]);
     } finally {
       setLoading(false);
@@ -164,6 +185,11 @@ export function PlaceAutocomplete({ value, onChange, placeholder, id }: Props) {
               </div>
             </button>
           ))}
+        </div>
+      )}
+      {errorMsg && (
+        <div className="mt-1 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {errorMsg}
         </div>
       )}
     </div>

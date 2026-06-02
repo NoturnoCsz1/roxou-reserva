@@ -22,15 +22,27 @@ export function loadGoogleMaps(): Promise<typeof google> {
   window.__gmapsLoader = new Promise((resolve, reject) => {
     const cbName = "__initGmaps_" + Math.random().toString(36).slice(2);
     (window as unknown as Record<string, unknown>)[cbName] = () => {
-      if (window.google?.maps) resolve(window.google);
-      else reject(new Error("Google Maps falhou ao carregar"));
+      if (window.google?.maps) {
+        console.log("[GOOGLE] SDK LOADED", {
+          maps: !!window.google.maps,
+          places: !!window.google.maps.places,
+        });
+        resolve(window.google);
+      } else {
+        console.error("[GOOGLE] SDK LOAD ERROR: google.maps undefined após callback");
+        reject(new Error("Google Maps falhou ao carregar"));
+      }
       delete (window as unknown as Record<string, unknown>)[cbName];
     };
     const s = document.createElement("script");
     s.src = `https://maps.googleapis.com/maps/api/js?key=${KEY}&libraries=places&loading=async&callback=${cbName}&language=pt-BR&region=BR`;
     s.async = true;
     s.defer = true;
-    s.onerror = () => reject(new Error("Falha ao carregar script do Google Maps"));
+    s.onerror = (e) => {
+      console.error("[GOOGLE] SDK SCRIPT TAG ERROR", e);
+      reject(new Error("Falha ao carregar script do Google Maps"));
+    };
+    console.log("[GOOGLE] LOADING SDK", s.src.replace(KEY!, "***"));
     document.head.appendChild(s);
   });
   return window.__gmapsLoader;
