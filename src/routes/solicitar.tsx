@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { calculatePrice, DEFAULT_PRICING, formatBRL, type PricingSettings } from "@/lib/pricing";
-import { calculateRoute, mapsConfigured, type RouteResult } from "@/lib/maps";
+import { calculateRoute, mapsConfigured, type RouteResult, type RouteWaypoint } from "@/lib/maps";
+import { PlaceAutocomplete, type PlaceValue } from "@/components/PlaceAutocomplete";
 import { toast } from "sonner";
-import { MapPin, Plus, X, Loader2, Route as RouteIcon, Clock, AlertTriangle } from "lucide-react";
+import { Plus, X, Loader2, Route as RouteIcon, Clock, AlertTriangle, Info } from "lucide-react";
 
 export const Route = createFileRoute("/solicitar")({
   head: () => ({ meta: [{ title: "Solicitar orçamento — Reserva Roxou" }] }),
@@ -44,9 +45,9 @@ function Solicitar() {
   const [routeError, setRouteError] = useState<string | null>(null);
   const [manualKm, setManualKm] = useState("");
 
-  const [origin, setOrigin] = useState("");
-  const [destination, setDestination] = useState("");
-  const [stops, setStops] = useState<string[]>([]);
+  const [origin, setOrigin] = useState<PlaceValue | null>(null);
+  const [destination, setDestination] = useState<PlaceValue | null>(null);
+  const [stops, setStops] = useState<(PlaceValue | null)[]>([]);
   const [rideDate, setRideDate] = useState("");
   const [rideTime, setRideTime] = useState("");
   const [tripType, setTripType] = useState<"one_way" | "round_trip">("one_way");
@@ -67,7 +68,7 @@ function Solicitar() {
   useEffect(() => {
     setRouteData(null);
     setRouteError(null);
-  }, [origin, destination, stops.join("|")]);
+  }, [origin?.placeId, destination?.placeId, stops.map((s) => s?.placeId ?? "").join("|")]);
 
   const distance = routeData?.distanceKm ?? (parseFloat(manualKm.replace(",", ".")) || 0);
   const estimate = useMemo(
@@ -76,14 +77,22 @@ function Solicitar() {
   );
 
   const handleCalculate = async () => {
-    if (!origin.trim() || !destination.trim()) {
-      toast.error("Preencha origem e destino");
+    if (!origin || !destination) {
+      toast.error("Selecione origem e destino nas sugestões");
       return;
     }
     setCalculating(true);
     setRouteError(null);
     try {
-      const r = await calculateRoute({ origin, destination, stops });
+      const toWp = (p: PlaceValue): RouteWaypoint => ({
+        latLng: { lat: p.lat, lng: p.lng },
+        address: p.label,
+      });
+      const r = await calculateRoute({
+        origin: toWp(origin),
+        destination: toWp(destination),
+        stops: stops.filter((s): s is PlaceValue => !!s).map(toWp),
+      });
       setRouteData(r);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro ao calcular rota";
@@ -94,8 +103,8 @@ function Solicitar() {
     }
   };
 
-  const addStop = () => setStops((s) => [...s, ""]);
-  const updateStop = (i: number, v: string) =>
+  const addStop = () => setStops((s) => [...s, null]);
+  const updateStop = (i: number, v: PlaceValue | null) =>
     setStops((s) => s.map((x, idx) => (idx === i ? v : x)));
   const removeStop = (i: number) => setStops((s) => s.filter((_, idx) => idx !== i));
 
@@ -107,7 +116,8 @@ function Solicitar() {
     const source: "google_maps" | "manual_fallback" = routeData ? "google_maps" : "manual_fallback";
 
     const parsed = schema.safeParse({
-      origin, destination,
+      origin: origin?.label ?? "",
+      destination: destination?.label ?? "",
       ride_date: rideDate, ride_time: rideTime,
       distance_km: finalDistance,
       trip_type: tripType,
@@ -119,7 +129,7 @@ function Solicitar() {
       return;
     }
 
-    const cleanStops = stops.map((s) => s.trim()).filter(Boolean);
+    const cleanStops = stops.filter((s): s is PlaceValue => !!s).map((s) => s.label);
 
     setSubmitting(true);
     const { data, error } = await supabase
@@ -165,21 +175,42 @@ function Solicitar() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-3 flex gap-2 text-xs">
+          <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <span>Selecione uma sugestão da lista para calcular a rota com precisão.</span>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="origin" className="text-sm font-medium">Origem</Label>
-          <Input id="origin" className="h-12" value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="Endereço de partida" />
+          <PlaceAutocomplete
+            id="origin"
+            value={origin}
+            onChange={setOrigin}
+            placeholder="Digite e selecione o endereço de partida"
+          />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="destination" className="text-sm font-medium">Destino</Label>
-          <Input id="destination" className="h-12" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="Endereço de chegada" />
+          <PlaceAutocomplete
+            id="destination"
+            value={destination}
+            onChange={setDestination}
+            placeholder="Digite e selecione o destino"
+          />
         </div>
 
         {stops.map((s, i) => (
           <div key={i} className="space-y-2">
             <Label className="text-sm font-medium">Parada {i + 1}</Label>
             <div className="flex gap-2">
-              <Input className="h-12" value={s} onChange={(e) => updateStop(i, e.target.value)} placeholder="Endereço da parada" />
+              <div className="flex-1">
+                <PlaceAutocomplete
+                  value={s}
+                  onChange={(v) => updateStop(i, v)}
+                  placeholder="Digite e selecione a parada"
+                />
+              </div>
               <Button type="button" variant="outline" size="icon" className="h-12 w-12 shrink-0" onClick={() => removeStop(i)}>
                 <X className="h-4 w-4" />
               </Button>
@@ -195,7 +226,7 @@ function Solicitar() {
           <Button
             type="button"
             onClick={handleCalculate}
-            disabled={calculating || !origin.trim() || !destination.trim()}
+            disabled={calculating || !origin || !destination}
             className="w-full h-12 rounded-xl"
             variant="secondary"
           >
@@ -212,7 +243,9 @@ function Solicitar() {
             <Label htmlFor="manualKm" className="text-sm font-medium">Distância aproximada (km)</Label>
             {routeError && (
               <p className="text-xs text-destructive break-words">
-                Erro do Google Maps: {routeError}
+                {routeError.startsWith("ZERO_RESULTS")
+                  ? "Não encontramos esse endereço. Selecione uma opção da lista ou digite endereço completo com cidade e estado."
+                  : `Erro do Google Maps: ${routeError}`}
               </p>
             )}
             <Input id="manualKm" inputMode="decimal" className="h-12" value={manualKm} onChange={(e) => setManualKm(e.target.value)} placeholder="0" />
@@ -263,10 +296,10 @@ function Solicitar() {
         <div className="rounded-2xl border border-primary/40 bg-primary/10 p-4 space-y-2">
           <p className="text-xs uppercase tracking-wide text-primary font-semibold">Resumo da viagem</p>
 
-          {origin && <p className="text-sm"><span className="text-muted-foreground">Origem:</span> {origin}</p>}
-          {destination && <p className="text-sm"><span className="text-muted-foreground">Destino:</span> {destination}</p>}
-          {stops.filter((s) => s.trim()).length > 0 && (
-            <p className="text-sm"><span className="text-muted-foreground">Paradas:</span> {stops.filter((s) => s.trim()).join(" → ")}</p>
+          {origin && <p className="text-sm"><span className="text-muted-foreground">Origem:</span> {origin.label}</p>}
+          {destination && <p className="text-sm"><span className="text-muted-foreground">Destino:</span> {destination.label}</p>}
+          {stops.filter((s): s is PlaceValue => !!s).length > 0 && (
+            <p className="text-sm"><span className="text-muted-foreground">Paradas:</span> {stops.filter((s): s is PlaceValue => !!s).map((s) => s.label).join(" → ")}</p>
           )}
 
           {routeData ? (

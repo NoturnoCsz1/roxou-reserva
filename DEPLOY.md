@@ -16,7 +16,19 @@ Copie `.env.example` para `.env` e preencha:
 ```
 VITE_SUPABASE_URL=https://<projeto>.supabase.co
 VITE_SUPABASE_ANON_KEY=<anon-key>
+VITE_GOOGLE_MAPS_API_KEY=<chave-google-maps>
 ```
+
+### Google Maps Platform
+
+No Google Cloud Console, na chave usada em `VITE_GOOGLE_MAPS_API_KEY`, habilite as APIs:
+
+- **Maps JavaScript API** (autocomplete e mapas no browser)
+- **Places API (New)** (sugestões de endereço e detalhes de lugar)
+- **Routes API** (cálculo de distância e duração)
+- **Geocoding API** (opcional, fallback de texto livre)
+
+Restrinja a chave por HTTP referrer para `https://reserva.roxou.com.br/*` e `https://*.lovable.app/*`.
 
 ## VPS (Nginx)
 

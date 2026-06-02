@@ -5,10 +5,22 @@ export interface RouteResult {
   source: "google_maps" | "manual_fallback";
 }
 
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
+export interface RouteWaypoint {
+  /** Endereço completo, usado se não houver lat/lng. */
+  address?: string;
+  /** Coordenadas precisas vindas do Places Autocomplete. Preferidas. */
+  latLng?: LatLng;
+}
+
 export interface RouteInput {
-  origin: string;
-  destination: string;
-  stops?: string[];
+  origin: RouteWaypoint;
+  destination: RouteWaypoint;
+  stops?: RouteWaypoint[];
 }
 
 export const GOOGLE_MAPS_KEY: string | undefined =
@@ -19,6 +31,16 @@ export const mapsConfigured = (): boolean => Boolean(GOOGLE_MAPS_KEY);
 // Log único na carga do módulo para diagnóstico
 console.log("[MAPS] API KEY EXISTS:", !!GOOGLE_MAPS_KEY);
 
+function toRoutesWaypoint(w: RouteWaypoint) {
+  if (w.latLng) {
+    return { location: { latLng: { latitude: w.latLng.lat, longitude: w.latLng.lng } } };
+  }
+  if (w.address && w.address.trim()) {
+    return { address: w.address.trim() };
+  }
+  throw new Error("Waypoint sem endereço ou coordenadas");
+}
+
 /**
  * Calcula a distância e duração de uma rota usando a Google Routes API (v2).
  * Lança erro se a chamada falhar ou se a chave não estiver configurada.
@@ -28,18 +50,15 @@ export async function calculateRoute(input: RouteInput): Promise<RouteResult> {
   console.log("[MAPS] API KEY EXISTS:", !!key);
   if (!key) throw new Error("GOOGLE_MAPS_NOT_CONFIGURED");
 
-  const origin = input.origin.trim();
-  const destination = input.destination.trim();
-  if (!origin || !destination) throw new Error("Origem e destino obrigatórios");
-
+  const originWp = toRoutesWaypoint(input.origin);
+  const destinationWp = toRoutesWaypoint(input.destination);
   const intermediates = (input.stops ?? [])
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .map((s) => ({ address: s }));
+    .filter((s) => s.latLng || (s.address && s.address.trim()))
+    .map(toRoutesWaypoint);
 
   const body = {
-    origin: { address: origin },
-    destination: { address: destination },
+    origin: originWp,
+    destination: destinationWp,
     intermediates: intermediates.length ? intermediates : undefined,
     travelMode: "DRIVE",
     routingPreference: "TRAFFIC_AWARE",
@@ -48,9 +67,9 @@ export async function calculateRoute(input: RouteInput): Promise<RouteResult> {
     regionCode: "BR",
   };
 
-  console.log("[MAPS] ORIGIN:", origin);
-  console.log("[MAPS] DESTINATION:", destination);
-  console.log("[MAPS] REQUEST BODY:", JSON.stringify(body, null, 2));
+  console.log("[MAPS] ORIGIN:", input.origin);
+  console.log("[MAPS] DESTINATION:", input.destination);
+  console.log("[MAPS] ROUTE REQUEST", body);
 
   const res = await fetch(
     "https://routes.googleapis.com/directions/v2:computeRoutes",
@@ -82,7 +101,7 @@ export async function calculateRoute(input: RouteInput): Promise<RouteResult> {
   } catch {
     data = {};
   }
-  console.log("[MAPS] RESPONSE DATA:", data);
+  console.log("[MAPS] ROUTE RESPONSE", data);
 
   if (!res.ok || data.error) {
     const status = data.error?.status || `HTTP_${res.status}`;
