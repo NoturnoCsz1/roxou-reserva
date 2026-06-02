@@ -187,6 +187,11 @@ export function PlaceAutocomplete({ value, onChange, placeholder, id }: Props) {
           ))}
         </div>
       )}
+      {errorMsg && (
+        <div className="mt-1 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {errorMsg}
+        </div>
+      )}
     </div>
   );
 }
