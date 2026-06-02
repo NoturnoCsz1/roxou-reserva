@@ -82,11 +82,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Reserva Roxou — Motorista Particular" },
       { name: "description", content: "Sistema privado de reservas de motorista particular." },
       { name: "theme-color", content: "#0a0612" },
-      { property: "og:title", content: "Reserva Roxou" },
-      { property: "og:description", content: "Reservas de motorista particular." },
+      { property: "og:title", content: "Reserva Roxou — Motorista Particular" },
+      { property: "og:description", content: "Sistema privado de reservas de motorista particular." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Reserva Roxou — Motorista Particular" },
+      { name: "twitter:description", content: "Sistema privado de reservas de motorista particular." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/993b2758-f6d5-447a-86ae-5fd0efc0ff2d/id-preview-c2701600--37c1bb4f-6ce8-44cf-afff-348d55cbc9c9.lovable.app-1780411210933.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/993b2758-f6d5-447a-86ae-5fd0efc0ff2d/id-preview-c2701600--37c1bb4f-6ce8-44cf-afff-348d55cbc9c9.lovable.app-1780411210933.png" },
     ],
     links: [
       {
